@@ -46,6 +46,9 @@ function setValueDone_(sheetName, y, setData) {
   // シート名を履歴から呼び出す。
   // sheetName = getSheetName(sheetName) //内部関数のためコメントアウト
 
+  // ユニークキーを保存
+  cacheUniqueKey_()
+
   // シートを取得
   const sheet = getSheetByName(sheetName);
 
@@ -61,9 +64,20 @@ function setValueDone_(sheetName, y, setData) {
     if ([sheetName] in cacheUniqueKeyNoValues_) {
       if ([key] in cacheUniqueKeyNoValues_[sheetName]) { // キャッシュにキーが存在するか確認
         if (cacheUniqueKeyNoValues_[sheetName][key].length !== 0) {
-          if (cacheUniqueKeyNoValues_[sheetName][key].includes(setData[key])) {
+          
+          const uniqueValueMatchArray = cacheUniqueKeyNoValues_[sheetName][key].filter( value => {
+            if(value === setData[key]){
+              return true
+            } else if(Number(value) === setData[key]){ // BigInt型に場合に対応。
+              return true
+            }
+          })
+          // if (cacheUniqueKeyNoValues_[sheetName][key].includes()) {
+          if(uniqueValueMatchArray.length >= 1){
+            //  To Do エラー判定ではなく、ログですでに保存されているかどうかを返す。
             throw `このデータはすでに保存されています。${JSON.stringify(setData)}`
           }
+
         }
       }
     }

@@ -30,7 +30,9 @@ function getSheetObj(sheetName) {
 
   // キャッシュに保存されているか確認。
   if ([sheetName] in cacheGetSheetObjRelation_) {
-    return cacheGetSheetObjRelation_[sheetName]
+    // キャッシュに保存されている場合
+    return deepCopy(cacheGetSheetObjRelation_[sheetName]);
+
   } else {
     // キャッシュに保存されていない場合。
     const result = getSheetObj_(sheetName);
@@ -46,6 +48,7 @@ function getSheetObj(sheetName) {
               // リレーション元のkeyのvalueが配列[SET型][enumList型]
               if (Array.isArray(resultItem[cacheSchema_[sheetName][key]["relation"]["references"]])) {
                 if (relationObj[cacheSchema_[sheetName][key]["relation"]["sheetKey"]] && resultItem[cacheSchema_[sheetName][key]["relation"]["references"]]) { // null以外の場合
+                  
                   return resultItem[cacheSchema_[sheetName][key]["relation"]["references"]].includes(relationObj[cacheSchema_[sheetName][key]["relation"]["sheetKey"]])
 
                 }
@@ -54,11 +57,13 @@ function getSheetObj(sheetName) {
               // リレーション先のkeyのvalueが配列[SET型][enumList型]
               if (Array.isArray(relationObj[cacheSchema_[sheetName][key]["relation"]["sheetKey"]])) {
                 if (relationObj[cacheSchema_[sheetName][key]["relation"]["sheetKey"]] && resultItem[cacheSchema_[sheetName][key]["relation"]["references"]]) { // null以外の場合
+                  
                   return relationObj[cacheSchema_[sheetName][key]["relation"]["sheetKey"]].includes(resultItem[cacheSchema_[sheetName][key]["relation"]["references"]])
                 }
               }
 
               // リレーション先のkeyのvalueが文字列(object[SET型]以外)の場合は型を含めた完全一致で定義する。
+              
               return relationObj[cacheSchema_[sheetName][key]["relation"]["sheetKey"]] === resultItem[cacheSchema_[sheetName][key]["relation"]["references"]]
 
             });
@@ -69,7 +74,9 @@ function getSheetObj(sheetName) {
     // キャッシュに保存
     cacheGetSheetObjRelation_[sheetName] = result
     // 結果を返す
-    return result
+    
+    // return result;
+    return deepCopy(result);
   }
 
 }
@@ -83,7 +90,8 @@ function getSheetObj_(sheetName) {
   sheetName = getSheetName(sheetName)
 
   if ([sheetName] in constGetSheetObj_) { // キャッシュがある場合
-    return constGetSheetObj_[sheetName];
+    // return constGetSheetObj_[sheetName];
+    return deepCopy(constGetSheetObj_[sheetName]);
 
   } else {
     // シートを取得
@@ -97,8 +105,20 @@ function getSheetObj_(sheetName) {
       for (let item of result) {
         for (const key in cacheSchema_[sheetName]) { // 定義を繰り返す
           if ("dataType" in cacheSchema_[sheetName][key]) {
+
+            // BigInt型の場合 桁数の多い数字は文字型として出力する。デフォルトで桁数が多い数値は文字列としてスプシ(GAS)は扱っている。
+            if(cacheSchema_[sheetName][key]["dataType"].match(/bigint/i)){
+
+              if(typeof(item[key]) === "number"){ // 桁数の少ない数値は数値型なので統一させるために文字型として出力する。
+                item[key] = String(item[key]);
+              } else if(typeof(item[key]) === "string"){
+                // 何もしない(デフォルトの文字型の場合はそのまま出力)
+              } else {
+                item[key] = null;
+              }
+
             // 数値型の場合
-            if (cacheSchema_[sheetName][key]["dataType"].match(/int/i)) {
+            } else if (cacheSchema_[sheetName][key]["dataType"].match(/int/i)) {
               // 空文字をNumber()すると0になってしまう。 undefinedを返すとJSON.stringify()でkeyが削除されてしまうためnullを返す。
               if (item[key] === "" || item[key] === null) { // nullはNaNに変換
                 item[key] = NaN;
@@ -174,7 +194,7 @@ function getSheetObj_(sheetName) {
     // キャッシュに保存して
     constGetSheetObj_[sheetName] = result
     // リターン
-    return result;
+    return deepCopy(result);
 
   }
 

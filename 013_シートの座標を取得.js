@@ -85,8 +85,12 @@ function getYCoordinate(sheetName, xKey, value) {
       } else if(typeof(sheetObjItem[xKey]) === "number" && isNaN(sheetObjItem[xKey]) && typeof(value) === "number" && isNaN(value)){
         result[x].push(count);
       
-      // その他(文字型・Boolean型・null・"")
+      // その他(文字型・Boolean型・null・"") 
       } else if(sheetObjItem[xKey] === value){
+        result[x].push(count);
+
+      // BigInt型に対応(Valueが桁数の多い数値の場合に文字型に変換String()すると値が変わってしまうためシートデータ側をNumber()して比較する。))
+      } else if( Number(sheetObjItem[xKey]) === value){
         result[x].push(count);
       }
       count += 1

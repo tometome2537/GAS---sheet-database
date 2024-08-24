@@ -19,3 +19,11 @@ function getSheetNames(){
   return getSpreadSheet().getSheets().map(sheet => sheet.getName());
 }
 
+// ディープコピー
+// ※ キャッシュとしてobjを返す時に破壊メソッドの影響を受けないようにするために必要。
+function deepCopy(value){
+  return deepCopyRuchi(value) // 実行時間が一番早い。
+  // return rfdc()(value) // https://www.npmjs.com/package/rfdc
+  // return JSON.parse(JSON.stringify(value)) // JSONのゴリ押し
+}
+

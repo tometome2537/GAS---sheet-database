@@ -16,6 +16,7 @@ function setSchema(schema) {
   if (cacheSchema_) { //　キャッシュにスキーマがすでに保存されている確認。
     throw "スキーマを上書きしようとしています。大変危険！"
   } else {
+    /* この処理を実行すると時間がかかるためコメントアウト
     // 設定されたスキーマのxKeyが存在するかチェックする。
     for (let sheetName of Object.keys(schema)) { // シート名を繰り返す
       // シート名を履歴から呼び出す。
@@ -30,10 +31,9 @@ function setSchema(schema) {
         }
       }
     }
+    */
     // スキーマをキャッシュする。
     cacheSchema_ = schema;
-    // ユニークキーを保存
-    cacheUniqueKey_()
   }
   return { statas: "success" }
 }
