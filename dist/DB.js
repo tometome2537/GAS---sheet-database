@@ -125,15 +125,15 @@ class DB {
     const latestSheetName = this.getLatestSheetName(sheetName);
 
     //キャッシュに登録されているシート名かチェック
-    if ([latestSheetName] in cacheHistorySheetKeyName_) {
+    if ([latestSheetName] in this._historySheetKeyName) {
       // 保存されている場合
-      if ('keyNameHistory' in cacheHistorySheetKeyName_[latestSheetName]) {
+      if ('keyNameHistory' in this._historySheetKeyName[latestSheetName]) {
         // keyNameHistoryの項目があるかどうか
         if (
           [keyName] in
-          cacheHistorySheetKeyName_[latestSheetName]['keyNameHistory']
+          this._historySheetKeyName[latestSheetName]['keyNameHistory']
         ) {
-          return cacheHistorySheetKeyName_[latestSheetName]['keyNameHistory'][
+          return this._historySheetKeyName[latestSheetName]['keyNameHistory'][
             keyName
           ];
         }
@@ -326,6 +326,15 @@ class DB {
                 item[key] = item[key];
               }
             }
+          }
+        }
+      }
+      // デフォルトはnullにする。
+      for (let sheetObjItem of sheetObj) {
+        for(let sheetObjItemKey in sheetObjItem){
+          // デフォルトはnull
+          if (sheetObjItem[sheetObjItemKey] === "") {
+            sheetObjItem[sheetObjItemKey] = null;
           }
         }
       }
@@ -759,8 +768,8 @@ class DB {
           // SET型またはenumlist型に指定されている場合。
           if (
             Array.isArray(setData[key]) &&
-            [key] in this._schema &&
-            this._schema[key]['dataType'].match(/enumlist|set/i)
+            [key] in this.schema[latestSheetName] &&
+            this.schema[latestSheetName][key]['dataType'].match(/enumlist|set/i)
           ) {
             newValue = setData[key].join(' , ');
             if (oldValue === newValue) {
@@ -771,20 +780,17 @@ class DB {
 
             // Bool型の場合
           } else if (typeof setData[key] === 'boolean') {
-            newValue = '';
 
-            if (setData[key] === true) {
-              newValue = 'true';
-            } else if (setData[key] === false) {
-              newValue = 'false';
-            }
-
-            if (oldValue.toLowerCase() === newValue) {
-              // 古い値を小文字にして比較する。
+            // 新しい値を文字列
+            newValue = setData[key];
+            
+            
+            if (oldValue === newValue) {
               continue setValueLoop;
             } else {
               sheet.getRange(y, x).setValue(newValue);
             }
+            
 
             //json(obj)の場合
           } else if (typeof setData[key] === 'object') {
@@ -831,8 +837,8 @@ class DB {
     // スキーマを定義
     const schema = this.schema[latestSheetName];
 
-    // ユニークキーが保存処理が未実行の場合　または スキーマが未定義の場合
-    if (!this._cacheUniqueKeyDone.includes(latestSheetName) || !schema) {
+    // ユニークキーが保存処理が未実行の場合　かつ スキーマが定義されている場合。
+    if (!this._cacheUniqueKeyDone.includes(latestSheetName) && schema) {
       for (const key of Object.keys(schema)) {
         // シートの各keyの定義を繰り返す
         if ('decorator' in schema[key]) {
