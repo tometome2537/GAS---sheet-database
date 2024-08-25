@@ -221,10 +221,15 @@ class DB {
     // レスポンスする関数
     let sheetObj = null; // obj初期化
 
-    // 引数がすべてnullの場合にキャッシュから返す。
-    // if(!relationCount && !targets && !dataType){
+    // キャッシュ対象かどうかを判定(Bool値)
+    const cacheEligible = !relationCount && !targets && !dataType;
 
-    // }
+    // キャッシュ対象の場合、キャッシュに値があればそこから返す。
+    if (cacheEligible) {
+      if (this._cacheSheetObj[sheetName]) {
+        return this._cacheSheetObj[sheetName];
+      }
+    }
 
     // データタイプ
     if (dataType === 'schema' || !dataType) {
@@ -428,6 +433,11 @@ class DB {
       }
     }
 
+    // レスポンス前にキャッシュ対象の場合はキャッシュに値を保存する。
+    if (cacheEligible) {
+      this._cacheSheetObj[sheetName] = sheetObj;
+    }
+
     // レスポンス
     return DB.deepCopy(sheetObj);
   }
@@ -546,11 +556,11 @@ class DB {
     const latestSheetName = this.getLatestSheetName(sheetName);
 
     /* 
-      ・targetsの引数に以下のような同一のkey(この場合person)を持った配列が入力された場合エラー処理する。 → JavaScript言語の仕様で多分無理。
-      {"person": "名前１", "person": "名前２"}
-      以下のようにすれば意図した動作が可能
-      { "person": ["名前１", "名前２"] }
-      */
+    ・targetsの引数に以下のような同一のkey(この場合person)を持った配列が入力された場合エラー処理する。 → JavaScript言語の仕様で多分無理。
+    {"person": "名前１", "person": "名前２"}
+    以下のようにすれば意図した動作が可能
+    { "person": ["名前１", "名前２"] }
+    */
 
     // 結果を初期化
     let result = [];
