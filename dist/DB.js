@@ -148,7 +148,6 @@ class DB {
     const historySheetKeyName = cellData === "" ? {} : JSON.parse(cellData);
     this._historySheetKeyName = historySheetKeyName;
     return historySheetKeyName;
-    
   }
   // 最新のシート名の履歴を取得する。
   getLatestSheetName(sheetName) {
@@ -400,7 +399,7 @@ class DB {
       sheetObj = DB.convertArrayToObject(sheetValues);
     }
 
-    // ターゲット
+    // ターゲットが設定されている かつ リレーションのカウントが0の時。
     if (targets) {
       // 座標を取得
       const tergetCoordinate = this.getTargetCoordinate(
@@ -432,7 +431,7 @@ class DB {
             const relationSheetObj = this.getSheetObj(
               schema[key]['relation']['sheetName'],
               relationCount - 1,
-              targets,
+              null, // リレーション2層目以降はtarget引数は適応しない。
               dataType
             );
             // リザルトに付与
@@ -490,6 +489,8 @@ class DB {
         }
       }
     }
+
+    
 
     // レスポンス前にキャッシュ対象の場合はキャッシュに値を保存する。
     if (cacheEligible) {
