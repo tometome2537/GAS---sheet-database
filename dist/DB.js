@@ -15,6 +15,10 @@ class DB {
     // シート名・キー名変更履歴を定義
     this._historySheetKeyName = null;
 
+    // スプシのメタ情報を保存するシート名
+    // python等の別のライブラリで読み込むこともあるため値の変更は非推奨。
+    this._metaDataSheetName = "_metadata";
+
     // 空白のセルをnullとして扱うかどうか
     // To Do
 
@@ -86,30 +90,75 @@ class DB {
   getSheetNames() {
     return this.spreadSheet.getSheets().map(sheet => sheet.getName());
   }
-  // スキーマ
+  /** メタデータ保存のシート名を取得 */
+  get metaDataSheetName(){
+    // メタデータシートが存在しない場合は
+    if(!(this.getSheetNames().includes(this._metaDataSheetName))){
+      // シートの作成。
+      let newSheet = this.spreadSheet.insertSheet(this._metaDataSheetName);
+      newSheet.appendRow(["key","value"]);
+      // シートをアクティベート。
+      this.spreadSheet.setActiveSheet(newSheet);
+    }
+    return this._metaDataSheetName;
+  }
+  // スキーマの保存
   set schema(schema) {
+    // スキーマをmetaDataシートに保存する。
+    const metaDataSheet = this.getSheetByName(this.metaDataSheetName);
+    metaDataSheet.getRange('A2').setValue("schema");
+    metaDataSheet.getRange("B2").setValue(JSON.stringify(schema));
+    // classプロパティに保存
     this._schema = schema;
   }
+  // スキーマの読み取り
   get schema() {
-    return this._schema;
+    // スキーマが事前に渡されている場合
+    if(this._schema){
+      return this._schema;
+    }
+    // スキーマがclassプロパティにない場合
+    const metaDataSheet = this.getSheetByName(this.metaDataSheetName);
+    const cellData = metaDataSheet.getRange("B2").getValue();
+    const schema = cellData === "" ? {} : JSON.parse(cellData);
+    this._schema = schema;
+    return schema;
   }
-  // シート名・キー名変更履歴を定義
+  // シート名・キー名変更履歴をセット。
   set historySheetKeyName(historySheetKeyName) {
     if (this._historySheetKeyName) {
       throw `シート・キー履歴が再度設定されようとしています。`;
     } else {
+      // 値をmetaDataシートに保存する。
+      const metaDataSheet = this.spreadSheet.getSheetByName(this.metaDataSheetName);
+      metaDataSheet.getRange('A3').setValue("historySheetKeyName");
+      metaDataSheet.getRange("B3").setValue(JSON.stringify(historySheetKeyName));
+      // classプロパティに保存
       this._historySheetKeyName = historySheetKeyName;
     }
+  }
+  // シート名・キー名変更履歴を呼び出し。
+  get historySheetKeyName(){
+    if(this._historySheetKeyName){
+      return this._historySheetKeyName;
+    }
+    // シート名・キー名変更履歴がclassプロパティにない場合
+    const metaDataSheet = this.spreadSheet.getSheetByName(this.metaDataSheetName);
+    const cellData = metaDataSheet.getRange("B3").getValue();
+    const historySheetKeyName = cellData === "" ? {} : JSON.parse(cellData);
+    this._historySheetKeyName = historySheetKeyName;
+    return historySheetKeyName;
+    
   }
   // 最新のシート名の履歴を取得する。
   getLatestSheetName(sheetName) {
     if (!sheetName) {
       throw 'シート名が定義されていません。';
     }
-    for (const historySheetName in this._historySheetKeyName) {
-      if ('sheetNameHistory' in this._historySheetKeyName[historySheetName]) {
+    for (const historySheetName in this.historySheetKeyName) {
+      if ('sheetNameHistory' in this.historySheetKeyName[historySheetName]) {
         if (
-          this._historySheetKeyName[historySheetName][
+          this.historySheetKeyName[historySheetName][
             'sheetNameHistory'
           ].includes(sheetName)
         ) {
@@ -125,15 +174,15 @@ class DB {
     const latestSheetName = this.getLatestSheetName(sheetName);
 
     //キャッシュに登録されているシート名かチェック
-    if ([latestSheetName] in this._historySheetKeyName) {
+    if ([latestSheetName] in this.historySheetKeyName) {
       // 保存されている場合
-      if ('keyNameHistory' in this._historySheetKeyName[latestSheetName]) {
+      if ('keyNameHistory' in this.historySheetKeyName[latestSheetName]) {
         // keyNameHistoryの項目があるかどうか
         if (
           [keyName] in
-          this._historySheetKeyName[latestSheetName]['keyNameHistory']
+          this.historySheetKeyName[latestSheetName]['keyNameHistory']
         ) {
-          return this._historySheetKeyName[latestSheetName]['keyNameHistory'][
+          return this.historySheetKeyName[latestSheetName]['keyNameHistory'][
             keyName
           ];
         }
