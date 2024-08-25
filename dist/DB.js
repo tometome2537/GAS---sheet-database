@@ -752,7 +752,10 @@ class DB {
     // 保存を実行していい場合。
     if (setValueDone) {
       // 初期化
-      let result = {};
+      let result = { 
+        "status": "success",
+        "value": {}
+        };
       // setDataを繰り返して保存を実行
       for (const key in setData) {
         // X座標を取得
@@ -821,12 +824,15 @@ class DB {
           }
 
           // retrun result用objの追加
-          result[key] = { oldValue: oldValue, newValue: newValue };
+          result["value"][key] = { oldValue: oldValue, newValue: newValue };
         } // xsのforの閉じタグ
       } // setDataのfor閉じタグ
       return result;
     } else {
-      console.warn(`保存が拒否されました。：${errorText}`);
+      return  { 
+        "status": "error",
+        "errorMessage": errorText
+        }
     }
   }
 
