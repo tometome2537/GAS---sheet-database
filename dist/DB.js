@@ -104,10 +104,13 @@ class DB {
   }
   // スキーマの保存
   set schema(schema) {
-    // スキーマをmetaDataシートに保存する。
+    // スキーマをmetaDataシートに保存する。(ただし既存の値を変更点がない場合は何もしない。)
     const metaDataSheet = this.getSheetByName(this.metaDataSheetName);
-    metaDataSheet.getRange('A2').setValue("schema");
-    metaDataSheet.getRange("B2").setValue(JSON.stringify(schema));
+    const cellData = metaDataSheet.getRange("B2").getValue();
+    if(JSON.stringify(schema) !== cellData){
+      metaDataSheet.getRange('A2').setValue("schema");
+      metaDataSheet.getRange("B2").setValue(JSON.stringify(schema));
+    }
     // classプロパティに保存
     this._schema = schema;
   }
@@ -129,10 +132,13 @@ class DB {
     if (this._historySheetKeyName) {
       throw `シート・キー履歴が再度設定されようとしています。`;
     } else {
-      // 値をmetaDataシートに保存する。
+      // 値をmetaDataシートに保存する。(ただし既存の値を変更点がない場合は何もしない。)
       const metaDataSheet = this.spreadSheet.getSheetByName(this.metaDataSheetName);
-      metaDataSheet.getRange('A3').setValue("historySheetKeyName");
-      metaDataSheet.getRange("B3").setValue(JSON.stringify(historySheetKeyName));
+      const cellData = metaDataSheet.getRange("B3").getValue();
+      if(JSON.stringify(historySheetKeyName) !== cellData){
+        metaDataSheet.getRange('A3').setValue("historySheetKeyName");
+        metaDataSheet.getRange("B3").setValue(JSON.stringify(historySheetKeyName));
+      }
       // classプロパティに保存
       this._historySheetKeyName = historySheetKeyName;
     }
@@ -399,7 +405,7 @@ class DB {
       sheetObj = DB.convertArrayToObject(sheetValues);
     }
 
-    // ターゲットが設定されている かつ リレーションのカウントが0の時。
+    // ターゲットが設定されている。
     if (targets) {
       // 座標を取得
       const tergetCoordinate = this.getTargetCoordinate(
