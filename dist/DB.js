@@ -91,12 +91,12 @@ class DB {
     return this.spreadSheet.getSheets().map(sheet => sheet.getName());
   }
   /** メタデータ保存のシート名を取得 */
-  get metaDataSheetName(){
+  get metaDataSheetName() {
     // メタデータシートが存在しない場合は
-    if(!(this.getSheetNames().includes(this._metaDataSheetName))){
+    if (!(this.getSheetNames().includes(this._metaDataSheetName))) {
       // シートの作成。
       let newSheet = this.spreadSheet.insertSheet(this._metaDataSheetName);
-      newSheet.appendRow(["key","value"]);
+      newSheet.appendRow(["key", "value"]);
       // シートをアクティベート。
       this.spreadSheet.setActiveSheet(newSheet);
     }
@@ -107,7 +107,7 @@ class DB {
     // スキーマをmetaDataシートに保存する。(ただし既存の値を変更点がない場合は何もしない。)
     const metaDataSheet = this.getSheetByName(this.metaDataSheetName);
     const cellData = metaDataSheet.getRange("B2").getValue();
-    if(JSON.stringify(schema) !== cellData){
+    if (JSON.stringify(schema) !== cellData) {
       metaDataSheet.getRange('A2').setValue("schema");
       metaDataSheet.getRange("B2").setValue(JSON.stringify(schema));
     }
@@ -117,7 +117,7 @@ class DB {
   // スキーマの読み取り
   get schema() {
     // スキーマが事前に渡されている場合
-    if(this._schema){
+    if (this._schema) {
       return this._schema;
     }
     // スキーマがclassプロパティにない場合
@@ -135,7 +135,7 @@ class DB {
       // 値をmetaDataシートに保存する。(ただし既存の値を変更点がない場合は何もしない。)
       const metaDataSheet = this.spreadSheet.getSheetByName(this.metaDataSheetName);
       const cellData = metaDataSheet.getRange("B3").getValue();
-      if(JSON.stringify(historySheetKeyName) !== cellData){
+      if (JSON.stringify(historySheetKeyName) !== cellData) {
         metaDataSheet.getRange('A3').setValue("historySheetKeyName");
         metaDataSheet.getRange("B3").setValue(JSON.stringify(historySheetKeyName));
       }
@@ -144,8 +144,8 @@ class DB {
     }
   }
   // シート名・キー名変更履歴を呼び出し。
-  get historySheetKeyName(){
-    if(this._historySheetKeyName){
+  get historySheetKeyName() {
+    if (this._historySheetKeyName) {
       return this._historySheetKeyName;
     }
     // シート名・キー名変更履歴がclassプロパティにない場合
@@ -385,7 +385,7 @@ class DB {
       }
       // デフォルトはnullにする。
       for (let sheetObjItem of sheetObj) {
-        for(let sheetObjItemKey in sheetObjItem){
+        for (let sheetObjItemKey in sheetObjItem) {
           // デフォルトはnull
           if (sheetObjItem[sheetObjItemKey] === "") {
             sheetObjItem[sheetObjItemKey] = null;
@@ -496,7 +496,7 @@ class DB {
       }
     }
 
-    
+
 
     // レスポンス前にキャッシュ対象の場合はキャッシュに値を保存する。
     if (cacheEligible) {
@@ -747,16 +747,31 @@ class DB {
         this.getSheetValues(latestSheetName).length + 1;
     }
 
+
+    // レスポンスを初期化
+    const response = [];
+
     // 保存を実行
-    const result = [];
-    result.push(
-      this.setValueDone_(latestSheetName, this._ySetValueAppEndRow, setData)
+    const result = this.setValueDone_(latestSheetName, this._ySetValueAppEndRow, setData)
+
+    response.push(
+      result
     );
 
     // 値を保存するy座標の値を更新
-    this._ySetValueAppEndRow += 1;
+    if (result["status"] === "success") {
+      // 保存に成功していた場合
+      this._ySetValueAppEndRow += 1;
+    } else if (result["status"] === "error") {
+      // 保存に失敗していた場合
+      // 何もしない
+    } else {
+      // それ以外の場合
+      throw "setValueAppEndRow()の実行において保存の成功可否が不明です。"
+    }
 
-    return result;
+
+    return response;
   }
   // 保存を実行(内部関数)
   setValueDone_(sheetName, y, setData) {
@@ -808,10 +823,10 @@ class DB {
     // 保存を実行していい場合。
     if (setValueDone) {
       // 初期化
-      let result = { 
+      let result = {
         "status": "success",
         "value": {}
-        };
+      };
       // setDataを繰り返して保存を実行
       for (const key in setData) {
         // X座標を取得
@@ -842,14 +857,14 @@ class DB {
 
             // 新しい値を文字列
             newValue = setData[key];
-            
-            
+
+
             if (oldValue === newValue) {
               continue setValueLoop;
             } else {
               sheet.getRange(y, x).setValue(newValue);
             }
-            
+
 
             //json(obj)の場合
           } else if (typeof setData[key] === 'object') {
@@ -885,10 +900,10 @@ class DB {
       } // setDataのfor閉じタグ
       return result;
     } else {
-      return  { 
+      return {
         "status": "error",
         "errorMessage": errorText
-        }
+      }
     }
   }
 
