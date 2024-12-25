@@ -229,7 +229,7 @@ class SheetDB_ {
       this._cacheSheetValuesAllSheet[latestSheetName] = sheetValues; // キャッシュに保存
       result = sheetValues;
     }
-    return DB.deepCopy(result);
+    return SheetDB_.deepCopy(result);
   }
   // シートの値②(元の関数)を読み込む ※ 関数のみ取得。関数でないセルは ""(空白)で取得される。 (例 =sum() )
   getSheetFormulas(sheetName) {
@@ -287,7 +287,7 @@ class SheetDB_ {
       const sheetValues = this.getSheetValues(latestSheetName);
 
       // objに変換
-      sheetObj = DB.convertArrayToObjectString(sheetValues);
+      sheetObj = SheetDB_.convertArrayToObjectString(sheetValues);
 
       // スキーマを定義
       const schema = this.schema[latestSheetName];
@@ -393,12 +393,12 @@ class SheetDB_ {
       // 値を取得
       const sheetValues = this.getSheetValues(latestSheetName);
       // objに変換
-      sheetObj = DB.convertArrayToObjectString(sheetValues);
+      sheetObj = SheetDB_.convertArrayToObjectString(sheetValues);
     } else if (dataType === 'values') {
       // 値を取得
       const sheetValues = this.getSheetValues(latestSheetName);
       // objに変換
-      sheetObj = DB.convertArrayToObject(sheetValues);
+      sheetObj = SheetDB_.convertArrayToObject(sheetValues);
     }
 
     // ターゲットが設定されている。
@@ -500,7 +500,7 @@ class SheetDB_ {
     }
 
     // レスポンス
-    return DB.deepCopy(sheetObj);
+    return SheetDB_.deepCopy(sheetObj);
   }
 
   // X軸を調べる
@@ -983,7 +983,7 @@ class SheetDB_ {
 
   // シートを入れるとobj形式に変換してくれる。
   static convertArrayToObject(sheetValues) {
-    const rows = DB.deepCopy(sheetValues); // deepCopy
+    const rows = SheetDB_.deepCopy(sheetValues); // deepCopy
     const keys = rows.splice(0, 1)[0];
     return rows.map(row => {
       const obj = {};
@@ -1018,12 +1018,12 @@ class SheetDB_ {
     } else if (['string', 'boolean', 'number'].includes(typeof val)) {
       return val;
     } else if (Array.isArray(val)) {
-      return val.map(item => DB.deepCopy(item));
+      return val.map(item => SheetDB_.deepCopy(item));
     } else if (val instanceof Date) {
       return new Date(val.getTime());
     } else {
       return Object.keys(val).reduce((acc, key) => {
-        acc[key] = DB.deepCopy(val[key]);
+        acc[key] = SheetDB_.deepCopy(val[key]);
         return acc;
       }, {});
     }
